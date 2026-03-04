@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Space to Tab Generator</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f4f4f4;
+    }
+
+    textarea {
+        width: 100%;
+        min-height: 80px;
+        margin-bottom: 15px;
+        font-family: monospace;
+        padding: 8px;
+    }
+
+    .output-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .output-row input {
+        flex: 1;
+        font-family: monospace;
+        padding: 6px;
+        height: 28px;
+    }
+
+    button {
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<h2>Space → Single Tab Replacer</h2>
+
+<textarea id="inputText" placeholder="Paste your text here..."></textarea>
+
+<div id="outputs"></div>
+
+<script>
+const input = document.getElementById("inputText");
+const outputs = document.getElementById("outputs");
+
+input.addEventListener("input", generateOutputs);
+
+function generateOutputs() {
+    const text = input.value.trim();
+    outputs.innerHTML = "";
+
+    if (!text) return;
+
+    const spaceIndexes = [];
+
+    for (let i = 0; i < text.length; i++) {
+        if (text[i] === " ") {
+            spaceIndexes.push(i);
+        }
+    }
+
+    spaceIndexes.forEach((spaceIndex) => {
+        const modified =
+            text.substring(0, spaceIndex) +
+            "\t" +
+            text.substring(spaceIndex + 1);
+
+        const row = document.createElement("div");
+        row.className = "output-row";
+
+        const button = document.createElement("button");
+        button.textContent = "Copy";
+        button.onclick = () => {
+            navigator.clipboard.writeText(modified);
+        };
+
+        const inputField = document.createElement("input");
+        inputField.type = "text";
+        inputField.value = modified;
+        inputField.readOnly = true;
+
+        row.appendChild(button);
+        row.appendChild(inputField);
+        outputs.appendChild(row);
+    });
+}
+</script>
+
+</body>
+</html>

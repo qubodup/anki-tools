@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TSV Processor</title>
+<style>
+  body { font-family: Arial; margin: 20px; }
+  textarea { width: 100%; height: 200px; }
+  table { border-collapse: collapse; margin-top: 20px; }
+  td { border: 1px solid #999; padding: 6px 10px; }
+  button { margin-right: 10px; }
+</style>
+</head>
+<body>
+
+<h2>TSV Processor</h2>
+
+<textarea id="input" placeholder="Paste TSV data here...">singleword	wordy words	category</textarea>
+<br><br>
+
+<button onclick="processTSV()">Convert</button>
+<button onclick="copyTSV()">Copy TSV</button>
+
+<div id="output"></div>
+
+<script>
+let currentTableData = [];
+
+function conv(text) {
+    let cleaned = text
+        .toLowerCase()
+        .replace(/[^\p{L}\-\s]/gu, "") // keep unicode letters, space, hyphen
+        .trim();
+
+    if (cleaned.length <= 40) {
+        return cleaned.replace(/\s+/gu, "_");
+    }
+
+    let words = [];
+    let regex = /\S+/gu;
+    let match;
+
+    while ((match = regex.exec(cleaned)) !== null) {
+        words.push({
+            word: match[0],
+            start: match.index
+        });
+    }
+
+    let kept = words.filter(w => w.start < 40);
+    let result = kept.map(w => w.word).join(" ");
+
+    return result.replace(/\s+/gu, "_");
+}
+
+function processTSV() {
+    const input = document.getElementById("input").value.trim();
+    const lines = input.split("\n");
+
+    let html = "<table>";
+    currentTableData = [];
+
+    lines.forEach(line => {
+        if (!line.trim()) return;
+
+        const cols = line.split("\t");
+        const A = cols[0] || "";
+        const B = cols[1] || "";
+        const C = cols[2] || "";
+
+        const convA = conv(A);
+        const convB = conv(B);
+
+        const D = C + "-" + convA;
+        const E = C + "-" + convA + "-" + convB;
+
+        const F = A + "[sound:" + D + ".mp3]";
+        const G = B + "[sound:" + E + ".mp3]";
+
+        currentTableData.push([A, B, C, D, E, F, G]);
+
+        html += "<tr>";
+        html += `<td>${A}</td>`;
+        html += `<td>${B}</td>`;
+        html += `<td>${C}</td>`;
+        html += `<td>${D}</td>`;
+        html += `<td>${E}</td>`;
+        html += `<td>${F}</td>`;
+        html += `<td>${G}</td>`;
+        html += "</tr>";
+    });
+
+    html += "</table>";
+    document.getElementById("output").innerHTML = html;
+}
+
+function copyTSV() {
+    if (!currentTableData.length) return;
+
+    const tsv = currentTableData
+        .map(row => row.join("\t"))
+        .join("\n");
+
+    navigator.clipboard.writeText(tsv).then(() => {
+        alert("Copied as TSV!");
+    });
+}
+</script>
+
+</body>
+</html>
