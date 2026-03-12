@@ -18,6 +18,17 @@
         padding: 8px;
     }
 
+    /* container for both output columns */
+    .columns {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+    }
+
+    .column {
+        flex: 1;
+    }
+
     .output-row {
         display: flex;
         align-items: center;
@@ -25,16 +36,25 @@
         margin-bottom: 8px;
     }
 
-    .output-row input {
+    .output-row input,
+    .output-row textarea {
         flex: 1;
         font-family: monospace;
         padding: 6px;
-        height: 28px;
+    }
+
+    .output-row textarea {
+        min-height: 50px;
+        resize: vertical;
     }
 
     button {
         padding: 5px 10px;
         cursor: pointer;
+    }
+
+    h3 {
+        margin-top: 0;
     }
 </style>
 </head>
@@ -44,28 +64,50 @@
 
 <textarea id="inputText" placeholder="Paste your text here..."></textarea>
 
-<div id="outputs"></div>
+<!-- two columns:
+     1) original behaviour (single line processing)
+     2) multiline processing preserving newlines -->
+<div class="columns">
+    <div class="column">
+        <h3>Single-line replacements</h3>
+        <div id="outputs"></div>
+    </div>
+
+    <div class="column">
+        <h3>Multiline replacements (preserve newlines)</h3>
+        <div id="multiOutputs"></div>
+    </div>
+</div>
 
 <script>
 const input = document.getElementById("inputText");
-const outputs = document.getElementById("outputs");
+const outputs = document.getElementById("outputs");       // original outputs
+const multiOutputs = document.getElementById("multiOutputs"); // multiline outputs
 
 input.addEventListener("input", generateOutputs);
 
+/* Main generator: creates both the original single-line results
+   and the multiline results that keep line breaks intact */
 function generateOutputs() {
     const text = input.value.trim();
+
     outputs.innerHTML = "";
+    multiOutputs.innerHTML = "";
 
     if (!text) return;
 
+    /* ---------- ORIGINAL BEHAVIOUR (single line) ---------- */
+
     const spaceIndexes = [];
 
+    // find indexes of spaces
     for (let i = 0; i < text.length; i++) {
         if (text[i] === " ") {
             spaceIndexes.push(i);
         }
     }
 
+    // generate one output for each space replaced with a tab
     spaceIndexes.forEach((spaceIndex) => {
         const modified =
             text.substring(0, spaceIndex) +
@@ -90,6 +132,65 @@ function generateOutputs() {
         row.appendChild(inputField);
         outputs.appendChild(row);
     });
+
+    /* ---------- MULTILINE VERSION (preserves newlines) ---------- */
+
+    // split input into lines
+    const lines = text.split("\n");
+
+    // determine the maximum number of spaces in any line
+    // each index represents a "column" replacement across all lines
+    let maxSpaces = 0;
+    const lineSpaces = [];
+
+    lines.forEach(line => {
+        const indexes = [];
+        for (let i = 0; i < line.length; i++) {
+            if (line[i] === " ") indexes.push(i);
+        }
+        lineSpaces.push(indexes);
+        maxSpaces = Math.max(maxSpaces, indexes.length);
+    });
+
+    // for each "space position index" across lines
+    // generate a version where that space becomes a tab in every line
+    for (let spacePosition = 0; spacePosition < maxSpaces; spacePosition++) {
+
+        const modifiedLines = lines.map((line, lineIndex) => {
+            const indexes = lineSpaces[lineIndex];
+
+            // if this line doesn't have that many spaces, keep it unchanged
+            if (spacePosition >= indexes.length) return line;
+
+            const spaceIndex = indexes[spacePosition];
+
+            return (
+                line.substring(0, spaceIndex) +
+                "\t" +
+                line.substring(spaceIndex + 1)
+            );
+        });
+
+        const modifiedText = modifiedLines.join("\n");
+
+        const row = document.createElement("div");
+        row.className = "output-row";
+
+        const button = document.createElement("button");
+        button.textContent = "Copy";
+        button.onclick = () => {
+            navigator.clipboard.writeText(modifiedText);
+        };
+
+        // textarea used here so newlines remain visible
+        const textarea = document.createElement("textarea");
+        textarea.value = modifiedText;
+        textarea.readOnly = true;
+
+        row.appendChild(button);
+        row.appendChild(textarea);
+        multiOutputs.appendChild(row);
+    }
 }
 </script>
 
