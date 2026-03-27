@@ -18,6 +18,12 @@
 <textarea id="input" placeholder="Paste TSV data here...">singleword	wordy words	category</textarea>
 <br><br>
 
+<div>
+  <label><input type="radio" name="parenMode" value="end" checked> remove last () at end</label>
+  <label><input type="radio" name="parenMode" value="all"> remove all ()</label>
+  <label><input type="radio" name="parenMode" value="none"> keep ()</label>
+</div>
+
 <button onclick="processTSV()">Convert</button>
 <button onclick="copyTSV()">Copy TSV</button>
 
@@ -26,11 +32,30 @@
 <script>
 let currentTableData = [];
 
+// parenthesis modes: "end" (default), "all", "none"
+function handleParentheses(text) {
+    const mode = document.querySelector('input[name="parenMode"]:checked').value;
+
+    if (mode === "all") {
+        // remove all parentheses AND their content
+        return text.replace(/\([^)]*\)/g, "").trim();
+    }
+
+    if (mode === "end") {
+        // remove last parentheses at end INCLUDING content
+        return text.replace(/\s*\([^)]*\)\s*$/g, "").trim();
+    }
+
+    return text;
+}
+
 function conv(text) {
+    text = handleParentheses(text);
+
     let cleaned = text
         .toLowerCase()
         // replace colon with underscore so 12:30 becomes 12_30
-        .replace(/:/g, "_")
+        .replace(/[:\/]/g, " ")
         // keep unicode letters, digits, space, hyphen, underscore
         .replace(/[^\p{L}\d\-\s_]/gu, "")
         .trim();
