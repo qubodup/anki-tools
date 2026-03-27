@@ -29,7 +29,10 @@ let currentTableData = [];
 function conv(text) {
     let cleaned = text
         .toLowerCase()
-        .replace(/[^\p{L}\-\s]/gu, "") // keep unicode letters, space, hyphen
+        // replace colon with underscore so 12:30 becomes 12_30
+        .replace(/:/g, "_")
+        // keep unicode letters, digits, space, hyphen, underscore
+        .replace(/[^\p{L}\d\-\s_]/gu, "")
         .trim();
 
     if (cleaned.length <= 40) {
