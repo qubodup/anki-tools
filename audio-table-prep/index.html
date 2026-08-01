@@ -53,7 +53,9 @@ function conv(text) {
     text = handleParentheses(text);
 
     let cleaned = text
-        .toLowerCase()
+        .normalize("NFD")
+				.replace(/[\u0300-\u036f]/g, "")
+				.toLowerCase()
         // replace colon with underscore so 12:30 becomes 12_30
         .replace(/[:\/]/g, " ")
         // keep unicode letters, digits, space, hyphen, underscore
